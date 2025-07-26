@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yugal's Professional Invoice Generator</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --success-color: #4cc9f0;
+            --danger-color: #f72585;
+            --warning-color: #f8961e;
+            --info-color: #43aa8b;
+            
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-light: #f8f9fa;
+            
+            --bg-color: #f9f5f0; /* Creamy background */
+            --card-bg: #ffffff;
+            --border-color: #e0d6cc;
+            
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.08);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #4895ef;
+            --secondary-color: #4361ee;
+            --accent-color: #3f37c9;
+            --light-color: #343a40;
+            --dark-color: #f8f9fa;
+            
+            --text-primary: #f8f9fa;
+            --text-secondary: #e9ecef;
+            
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            margin-right: 10px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .form-control, .form-select {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+        }
+
+        .items-header {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .item-row {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .remove-item {
+            color: var(--danger-color);
+        }
+
+        .invoice-paper {
+            background-color: white;
+            border: 1px solid #eee;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .signature-line {
+            border-top: 1px solid #333;
+            margin-top: 30px;
+            padding-top: 5px;
+        }
+
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom file upload button */
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .invoice-paper, .invoice-paper * {
+                visibility: visible;
+            }
+            .invoice-paper {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .invoice-footer {
+                page-break-after: always;
+            }
+        }
+
+        /* Dark mode toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 25px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--light-color);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 19px;
+            width: 19px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--primary-color);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--dark-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(25px);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+        <div class="container">
+            <div class="d-flex align-items-center">
+                <div class="logo">Y</div>
+                <a class="navbar-brand" href="#">Yugal's Invoice Generator</a>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="me-3 text-white">
+                    <i class="fas fa-sun me-1"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <i class="fas fa-moon ms-1"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <div class="row mb-3 no-print">
+            <div class="col-12">
+                <div class="d-flex flex-wrap gap-2">
+                    <button id="generatePdf" class="btn btn-primary">
+                        <i class="fas fa-file-pdf me-1"></i> Save as PDF
+                    </button>
+                    <button id="printInvoice" class="btn btn-primary">
+                        <i class="fas fa-print me-1"></i> Print Invoice
+                    </button>
+                    <button id="saveTemplate" class="btn btn-success">
+                        <i class="fas fa-save me-1"></i> Save Template
+                    </button>
+                    <button id="loadTemplate" class="btn btn-primary">
+                        <i class="fas fa-folder-open me-1"></i> Load Template
+                    </button>
+                    <button id="clearAll" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-info-circle me-2"></i> Invoice Details
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="invoiceNumber" class="form-label">Invoice #</label>
+                                <input type="text" class="form-control" id="invoiceNumber" placeholder="INV-001">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="invoiceDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="invoiceDate">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="dueDate" class="form-label">Due Date</label>
+                                <input type="date" class="form-control" id="dueDate">
+                            </div>
+                            <div class="col-md-8">
+                                <label for="invoiceTitle" class="form-label">Invoice Title</label>
+                                <input type="text" class="form-control" id="invoiceTitle" placeholder="Invoice for Services Rendered">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="paymentTerms" class="form-label">Payment Terms</label>
+                                <input type="text" class="form-control" id="paymentTerms" placeholder="Due within 15 days">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-building me-2"></i> Your Company Info
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="companyName" class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="companyName" placeholder="Your Company LLC">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="companyEmail" placeholder="contact@company.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="companyAddress" rows="2" placeholder="123 Business St, City, Country"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyPhone" class="form-label">Phone</label>
+                                <input type="tel" class="form-control" id="companyPhone" placeholder="+1 (555) 123-4567">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyWebsite" class="form-label">Website</label>
+                                <input type="text" class="form-control" id="companyWebsite" placeholder="www.company.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="companyTaxId" class="form-label">Tax ID</label>
+                                <input type="text" class="form-control" id="companyTaxId" placeholder="TAX-123456789">
+                            </div>
+                            <div class="col-12">
+                                <label for="companyLogo" class="form-label">Company Logo</label>
+                                <div class="file-upload">
+                                    <button class="btn btn-primary w-100">
+                                        <i class="fas fa-upload me-1"></i> Upload Logo
+                                    </button>
+                                    <input type="file" id="companyLogo" accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-user-tie me-2"></i> Client Info
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="clientName" class="form-label">Client Name</label>
+                                <input type="text" class="form-control" id="clientName" placeholder="Client Company LLC">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientEmail" class="form-label">Client Email</label>
+                                <input type="email" class="form-control" id="clientEmail" placeholder="contact@client.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientAddress" class="form-label">Client Address</label>
+                                <textarea class="form-control" id="clientAddress" rows="2" placeholder="123 Client St, City, Country"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientPhone" class="form-label">Client Phone</label>
+                                <input type="tel" class="form-control" id="clientPhone" placeholder="+1 (555) 987-6543">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="clientTaxId" class="form-label">Client Tax ID</label>
+                                <input type="text" class="form-control" id="clientTaxId" placeholder="TAX-987654321">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-receipt me-2"></i> Items
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead class="items-header">
+                                    <tr>
+                                        <th class="description">Description</th>
+                                        <th class="quantity">Qty</th>
+                                        <th class="price">Unit Price</th>
+                                        <th class="tax">Tax</th>
+                                        <th class="amount">Amount</th>
+                                        <th class="action"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsContainer">
+                                    <!-- Items will be added here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="addItem" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-calculator me-2"></i> Totals
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="taxRate" class="form-label">Tax Rate (%)</label>
+                                <input type="number" class="form-control" id="taxRate" value="10" min="0" step="0.1">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="discount" class="form-label">Discount ($)</label>
+                                <input type="number" class="form-control" id="discount" value="0" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="shipping" class="form-label">Shipping ($)</label>
+                                <input type="number" class="form-control" id="shipping" value="0" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Subtotal:</span>
+                                    <span id="subtotal">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Tax:</span>
+                                    <span id="taxAmount">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Discount:</span>
+                                    <span id="discountAmount">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Shipping:</span>
+                                    <span id="shippingAmount">$0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between fw-bold fs-5 mt-2 pt-2 border-top">
+                                    <span>Total:</span>
+                                    <span id="totalAmount">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="currency" class="form-label">Currency</label>
+                                <select class="form-select" id="currency">
+                                    <option value="$">USD ($)</option>
+                                    <option value="€">EUR (€)</option>
+                                    <option value="£">GBP (£)</option>
+                                    <option value="¥">JPY (¥)</option>
+                                    <option value="₹">INR (₹)</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6" id="customCurrencyContainer" style="display: none;">
+                                <label for="customCurrency" class="form-label">Custom Currency Symbol</label>
+                                <input type="text" class="form-control" id="customCurrency" placeholder="Enter currency symbol">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-sticky-note me-2"></i> Notes & Signature
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" rows="3" placeholder="Payment terms, thank you note, etc."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="footerText" class="form-label">Footer Text</label>
+                            <textarea class="form-control" id="footerText" rows="2" placeholder="Thank you for your business!"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="signatureImage" class="form-label">Signature Image</label>
+                            <div class="file-upload">
+                                <button class="btn btn-primary w-100">
+                                    <i class="fas fa-upload me-1"></i> Upload Signature
+                                </button>
+                                <input type="file" id="signatureImage" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="signatureName" class="form-label">Signature Name</label>
+                                <input type="text" class="form-control" id="signatureName" placeholder="John Doe">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="signatureTitle" class="form-label">Signature Title</label>
+                                <input type="text" class="form-control" id="signatureTitle" placeholder="CEO">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="sticky-top" style="top: 20px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-eye me-2"></i> Invoice Preview
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="invoice-paper p-4" id="invoicePreview">
+                                <div class="d-flex justify-content-between mb-4 flex-wrap">
+                                    <div class="company-info">
+                                        <div id="previewCompanyLogo" class="mb-3"></div>
+                                        <h2 id="previewCompanyName">Your Company LLC</h2>
+                                        <p id="previewCompanyAddress">123 Business St, City, Country</p>
+                                        <p id="previewCompanyContact">contact@company.com | +1 (555) 123-4567</p>
+                                        <p id="previewCompanyWebsite">www.company.com</p>
+                                        <p id="previewCompanyTaxId">Tax ID: TAX-123456789</p>
+                                    </div>
+                                    <div class="invoice-title text-end">
+                                        <h1 id="previewInvoiceTitle" class="mb-2">INVOICE</h1>
+                                        <div class="invoice-meta">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Invoice #:</span>
+                                                <span id="previewInvoiceNumber">INV-001</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Date:</span>
+                                                <span id="previewInvoiceDate">Jan 1, 2023</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Due Date:</span>
+                                                <span id="previewDueDate">Jan 15, 2023</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Payment Terms:</span>
+                                                <span id="previewPaymentTerms">Due within 15 days</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="client-info p-3 mb-4">
+                                    <h3 class="mb-2">Bill To:</h3>
+                                    <p id="previewClientName">Client Company LLC</p>
+                                    <p id="previewClientAddress">123 Client St, City, Country</p>
+                                    <p id="previewClientContact">contact@client.com | +1 (555) 987-6543</p>
+                                    <p id="previewClientTaxId">Tax ID: TAX-987654321</p>
+                                </div>
+
+                                <div class="invoice-items mb-4">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead class="items-header">
+                                                <tr>
+                                                    <th class="description">Description</th>
+                                                    <th class="quantity">Qty</th>
+                                                    <th class="price">Unit Price</th>
+                                                    <th class="tax">Tax</th>
+                                                    <th class="total">Amount</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="previewItemsContainer">
+                                                <tr class="item-row empty-message">
+                                                    <td colspan="5" class="text-center py-4">No items added yet</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap justify-content-between mb-4">
+                                    <div class="summary-notes" style="flex: 2; min-width: 250px;">
+                                        <h4>Notes:</h4>
+                                        <p id="previewNotes">Thank you for your business!</p>
+                                    </div>
+                                    <div class="summary-totals" style="flex: 1; min-width: 200px;">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Subtotal:</span>
+                                            <span id="previewSubtotal">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Tax:</span>
+                                            <span id="previewTax">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Discount:</span>
+                                            <span id="previewDiscount">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Shipping:</span>
+                                            <span id="previewShipping">$0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between fw-bold fs-5 mt-2 pt-2 border-top">
+                                            <span>Total:</span>
+                                            <span id="previewTotal">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="signature-container d-flex justify-content-end">
+                                    <div class="signature-box text-center" style="width: 200px;">
+                                        <div id="previewSignatureImage"></div>
+                                        <div class="signature-line"></div>
+                                        <p id="previewSignatureName" class="mb-0">John Doe</p>
+                                        <p id="previewSignatureTitle">CEO</p>
+                                    </div>
+                                </div>
+
+                                <div class="invoice-footer text-center mt-4 pt-3 border-top">
+                                    <p id="previewFooterText" class="mb-0">Thank you for your business!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filename Modal -->
+    <div class="modal fade" id="filenameModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save PDF As</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control" id="pdfFilename" value="yugal_invoice_generator.pdf" placeholder="Enter filename">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmPdf">Save PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-transparent border-0 shadow-none">
+                <div class="modal-body text-center">
+                    <div class="loading-spinner"></div>
+                    <div class="text-white mt-3 fs-5">Generating PDF...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the app
+            initApp();
+        });
+
+        function initApp() {
+            // Set current date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('invoiceDate').value = today;
+            
+            // Set due date to 15 days from now
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 15);
+            document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+            
+            // Generate a random invoice number
+            document.getElementById('invoiceNumber').value = 'INV-' + Math.floor(1000 + Math.random() * 9000);
+            
+            // Set default footer text
+            document.getElementById('footerText').value = 'Thank you for your business!';
+            
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('themeToggle');
+            themeToggle.addEventListener('change', toggleTheme);
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            themeToggle.checked = savedTheme === 'dark';
+            
+            // Add event listeners to form inputs
+            setupFormListeners();
+            
+            // Add first item row by default
+            addItemRow();
+            
+            // Set up button event listeners
+            document.getElementById('addItem').addEventListener('click', addItemRow);
+            document.getElementById('generatePdf').addEventListener('click', showFilenameModal);
+            document.getElementById('printInvoice').addEventListener('click', printInvoice);
+            document.getElementById('clearAll').addEventListener('click', clearAll);
+            document.getElementById('saveTemplate').addEventListener('click', saveTemplate);
+            document.getElementById('loadTemplate').addEventListener('click', loadTemplate);
+            document.getElementById('confirmPdf').addEventListener('click', generatePdf);
+            
+            // Currency selector
+            document.getElementById('currency').addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    document.getElementById('customCurrencyContainer').style.display = 'block';
+                } else {
+                    document.getElementById('customCurrencyContainer').style.display = 'none';
+                    updateInvoicePreview();
+                    calculateTotals();
+                }
+            });
+            
+            document.getElementById('customCurrency').addEventListener('input', function() {
+                updateInvoicePreview();
+                calculateTotals();
+            });
+            
+            // File upload handlers
+            document.getElementById('companyLogo').addEventListener('change', handleLogoUpload);
+            document.getElementById('signatureImage').addEventListener('change', handleSignatureUpload);
+            
+            // Initialize Bootstrap modal
+            const filenameModal = new bootstrap.Modal(document.getElementById('filenameModal'));
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            
+            // Initial preview update
+            updateInvoicePreview();
+        }
+
+        function toggleTheme() {
+            const newTheme = this.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function setupFormListeners() {
+            // Company info
+            document.getElementById('companyName').addEventListener('input', updateInvoicePreview);
+            document.getElementById('companyEmail').addEventListener('input', updateInvoicePreview);
+            document.getElementById('companyAddress').addEventListener('input', updateInvoicePreview);
+            document.getElementById('companyPhone').addEventListener('input', updateInvoicePreview);
+            document.getElementById('companyWebsite').addEventListener('input', updateInvoicePreview);
+            document.getElementById('companyTaxId').addEventListener('input', updateInvoicePreview);
+            
+            // Client info
+            document.getElementById('clientName').addEventListener('input', updateInvoicePreview);
+            document.getElementById('clientEmail').addEventListener('input', updateInvoicePreview);
+            document.getElementById('clientAddress').addEventListener('input', updateInvoicePreview);
+            document.getElementById('clientPhone').addEventListener('input', updateInvoicePreview);
+            document.getElementById('clientTaxId').addEventListener('input', updateInvoicePreview);
+            
+            // Invoice details
+            document.getElementById('invoiceNumber').addEventListener('input', updateInvoicePreview);
+            document.getElementById('invoiceDate').addEventListener('input', updateInvoicePreview);
+            document.getElementById('dueDate').addEventListener('input', updateInvoicePreview);
+            document.getElementById('invoiceTitle').addEventListener('input', updateInvoicePreview);
+            document.getElementById('paymentTerms').addEventListener('input', updateInvoicePreview);
+            
+            // Notes & Signature
+            document.getElementById('notes').addEventListener('input', updateInvoicePreview);
+            document.getElementById('footerText').addEventListener('input', updateInvoicePreview);
+            document.getElementById('signatureName').addEventListener('input', updateInvoicePreview);
+            document.getElementById('signatureTitle').addEventListener('input', updateInvoicePreview);
+            
+            // Totals
+            document.getElementById('taxRate').addEventListener('input', calculateTotals);
+            document.getElementById('discount').addEventListener('input', calculateTotals);
+            document.getElementById('shipping').addEventListener('input', calculateTotals);
+        }
+
+        function addItemRow() {
+            const itemsContainer = document.getElementById('itemsContainer');
+            const itemId = Date.now();
+            
+            const itemRow = document.createElement('tr');
+            itemRow.className = 'item-row';
+            itemRow.dataset.id = itemId;
+            
+            itemRow.innerHTML = `
+                <td class="description">
+                    <input type="text" class="form-control form-control-sm item-desc" placeholder="Item description">
+                </td>
+                <td class="quantity">
+                    <input type="number" class="form-control form-control-sm item-qty" value="1" min="1" step="1">
+                </td>
+                <td class="price">
+                    <input type="number" class="form-control form-control-sm item-price" value="0" min="0" step="0.01">
+                </td>
+                <td class="tax">
+                    <select class="form-select form-select-sm item-tax">
+                        <option value="0">0%</option>
+                        <option value="10" selected>10%</option>
+                        <option value="20">20%</option>
+                        <option value="other">Other</option>
+                    </select>
+                </td>
+                <td class="amount">
+                    <span class="item-amount">${getCurrencySymbol()}0.00</span>
+                </td>
+                <td class="action">
+                    <button class="btn btn-sm remove-item" data-id="${itemId}">&times;</button>
+                </td>
+            `;
+            
+            itemsContainer.appendChild(itemRow);
+            
+            // Add event listeners to new item inputs
+            const descInput = itemRow.querySelector('.item-desc');
+            const qtyInput = itemRow.querySelector('.item-qty');
+            const priceInput = itemRow.querySelector('.item-price');
+            const taxSelect = itemRow.querySelector('.item-tax');
+            const removeBtn = itemRow.querySelector('.remove-item');
+            
+            descInput.addEventListener('input', updateInvoicePreview);
+            qtyInput.addEventListener('input', () => {
+                calculateItemTotal(itemRow);
+                calculateTotals();
+                updateInvoicePreview();
+            });
+            priceInput.addEventListener('input', () => {
+                calculateItemTotal(itemRow);
+                calculateTotals();
+                updateInvoicePreview();
+            });
+            taxSelect.addEventListener('change', () => {
+                calculateItemTotal(itemRow);
+                calculateTotals();
+                updateInvoicePreview();
+            });
+            removeBtn.addEventListener('click', () => {
+                itemRow.remove();
+                calculateTotals();
+                updateInvoicePreview();
+            });
+            
+            // Focus on the description field
+            descInput.focus();
+        }
+
+        function calculateItemTotal(itemRow) {
+            const qty = parseFloat(itemRow.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(itemRow.querySelector('.item-price').value) || 0;
+            const taxSelect = itemRow.querySelector('.item-tax');
+            let taxRate = parseFloat(taxSelect.value) || 0;
+            
+            const subtotal = qty * price;
+            const taxAmount = subtotal * (taxRate / 100);
+            const total = subtotal + taxAmount;
+            
+            itemRow.querySelector('.item-amount').textContent = formatCurrency(total);
+        }
+
+        function calculateTotals() {
+            const itemRows = document.querySelectorAll('#itemsContainer .item-row');
+            const taxRate = parseFloat(document.getElementById('taxRate').value) || 0;
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            const shipping = parseFloat(document.getElementById('shipping').value) || 0;
+            
+            let subtotal = 0;
+            let totalTax = 0;
+            
+            itemRows.forEach(row => {
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const rowTaxRate = parseFloat(row.querySelector('.item-tax').value) || 0;
+                
+                const rowSubtotal = qty * price;
+                subtotal += rowSubtotal;
+                
+                const rowTax = rowSubtotal * (rowTaxRate / 100);
+                totalTax += rowTax;
+            });
+            
+            const total = subtotal + totalTax - discount + shipping;
+            
+            // Update summary
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('taxAmount').textContent = formatCurrency(totalTax);
+            document.getElementById('discountAmount').textContent = formatCurrency(discount);
+            document.getElementById('shippingAmount').textContent = formatCurrency(shipping);
+            document.getElementById('totalAmount').textContent = formatCurrency(total);
+            
+            // Update preview
+            updateInvoicePreview();
+        }
+
+        function updateInvoicePreview() {
+            // Company info
+            document.getElementById('previewCompanyName').textContent = 
+                document.getElementById('companyName').value || 'Your Company LLC';
+            document.getElementById('previewCompanyAddress').textContent = 
+                document.getElementById('companyAddress').value || '123 Business St, City, Country';
+            document.getElementById('previewCompanyContact').textContent = 
+                `${document.getElementById('companyEmail').value || 'contact@company.com'} | ${document.getElementById('companyPhone').value || '+1 (555) 123-4567'}`;
+            document.getElementById('previewCompanyWebsite').textContent = 
+                document.getElementById('companyWebsite').value || '';
+            document.getElementById('previewCompanyTaxId').textContent = 
+                document.getElementById('companyTaxId').value ? `Tax ID: ${document.getElementById('companyTaxId').value}` : '';
+            
+            // Client info
+            document.getElementById('previewClientName').textContent = 
+                document.getElementById('clientName').value || 'Client Company LLC';
+            document.getElementById('previewClientAddress').textContent = 
+                document.getElementById('clientAddress').value || '123 Client St, City, Country';
+            document.getElementById('previewClientContact').textContent = 
+                `${document.getElementById('clientEmail').value || 'contact@client.com'} | ${document.getElementById('clientPhone').value || '+1 (555) 987-6543'}`;
+            document.getElementById('previewClientTaxId').textContent = 
+                document.getElementById('clientTaxId').value ? `Tax ID: ${document.getElementById('clientTaxId').value}` : '';
+            
+            // Invoice details
+            document.getElementById('previewInvoiceNumber').textContent = 
+                document.getElementById('invoiceNumber').value || 'INV-001';
+            document.getElementById('previewInvoiceTitle').textContent = 
+                document.getElementById('invoiceTitle').value || 'INVOICE';
+            
+            const invoiceDate = document.getElementById('invoiceDate').value;
+            document.getElementById('previewInvoiceDate').textContent = 
+                invoiceDate ? formatDate(invoiceDate) : 'Jan 1, 2023';
+            
+            const dueDate = document.getElementById('dueDate').value;
+            document.getElementById('previewDueDate').textContent = 
+                dueDate ? formatDate(dueDate) : 'Jan 15, 2023';
+            
+            document.getElementById('previewPaymentTerms').textContent = 
+                document.getElementById('paymentTerms').value || 'Due within 15 days';
+            
+            // Notes & Footer
+            document.getElementById('previewNotes').textContent = 
+                document.getElementById('notes').value || 'Thank you for your business!';
+            document.getElementById('previewFooterText').textContent = 
+                document.getElementById('footerText').value || 'Thank you for your business!';
+            
+            // Signature
+            document.getElementById('previewSignatureName').textContent = 
+                document.getElementById('signatureName').value || '';
+            document.getElementById('previewSignatureTitle').textContent = 
+                document.getElementById('signatureTitle').value || '';
+            
+            // Items
+            const previewItemsContainer = document.getElementById('previewItemsContainer');
+            previewItemsContainer.innerHTML = '';
+            
+            const itemRows = document.querySelectorAll('#itemsContainer .item-row');
+            
+            if (itemRows.length === 0) {
+                previewItemsContainer.innerHTML = '<tr class="item-row empty-message"><td colspan="5" class="text-center py-4">No items added yet</td></tr>';
+            } else {
+                itemRows.forEach(row => {
+                    const desc = row.querySelector('.item-desc').value || 'Item description';
+                    const qty = row.querySelector('.item-qty').value || 0;
+                    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                    const taxRate = parseFloat(row.querySelector('.item-tax').value) || 0;
+                    const amount = row.querySelector('.item-amount').textContent;
+                    
+                    const itemRow = document.createElement('tr');
+                    itemRow.className = 'preview-item-row';
+                    itemRow.innerHTML = `
+                        <td class="description">${desc}</td>
+                        <td class="quantity">${qty}</td>
+                        <td class="price">${formatCurrency(price)}</td>
+                        <td class="tax">${taxRate}%</td>
+                        <td class="total">${amount}</td>
+                    `;
+                    
+                    previewItemsContainer.appendChild(itemRow);
+                });
+            }
+            
+            // Totals
+            document.getElementById('previewSubtotal').textContent = 
+                document.getElementById('subtotal').textContent;
+            document.getElementById('previewTax').textContent = 
+                document.getElementById('taxAmount').textContent;
+            document.getElementById('previewDiscount').textContent = 
+                document.getElementById('discountAmount').textContent;
+            document.getElementById('previewShipping').textContent = 
+                document.getElementById('shippingAmount').textContent;
+            document.getElementById('previewTotal').textContent = 
+                document.getElementById('totalAmount').textContent;
+        }
+
+        function getCurrencySymbol() {
+            const currency = document.getElementById('currency').value;
+            if (currency === 'custom') {
+                return document.getElementById('customCurrency').value || '$';
+            }
+            return currency;
+        }
+
+        function formatCurrency(amount) {
+            return getCurrencySymbol() + parseFloat(amount).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function showFilenameModal() {
+            const modal = new bootstrap.Modal(document.getElementById('filenameModal'));
+            modal.show();
+        }
+
+        async function generatePdf() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('filenameModal'));
+            modal.hide();
+            
+            // Show loading state
+            const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+            loadingModal.show();
+            
+            try {
+                // Import jsPDF dynamically
+                const { jsPDF } = window.jspdf;
+                
+                // Create a new PDF instance
+                const doc = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Capture the invoice preview as an image
+                const invoicePreview = document.getElementById('invoicePreview');
+                
+                // Use html2canvas to capture the preview
+                const canvas = await html2canvas(invoicePreview, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                // Convert canvas to image data
+                const imgData = canvas.toDataURL('image/png');
+                
+                // Calculate dimensions to fit the PDF
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                // Add the image to the PDF
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                
+                // Add a new page if the content is too long
+                let heightLeft = imgHeight;
+                let position = 0;
+                
+                while (heightLeft >= pageHeight) {
+                    position = heightLeft - pageHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // Save the PDF
+                let filename = document.getElementById('pdfFilename').value || 'yugal_invoice_generator.pdf';
+                if (!filename.toLowerCase().endsWith('.pdf')) {
+                    filename += '.pdf';
+                }
+                doc.save(filename);
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate PDF. Please try again.');
+            } finally {
+                // Hide loading modal
+                const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+                loadingModal.hide();
+            }
+        }
+
+        function printInvoice() {
+            window.print();
+        }
+
+        function saveTemplate() {
+            const formData = {
+                invoiceDetails: {
+                    invoiceNumber: document.getElementById('invoiceNumber').value,
+                    invoiceDate: document.getElementById('invoiceDate').value,
+                    dueDate: document.getElementById('dueDate').value,
+                    invoiceTitle: document.getElementById('invoiceTitle').value,
+                    paymentTerms: document.getElementById('paymentTerms').value
+                },
+                companyInfo: {
+                    companyName: document.getElementById('companyName').value,
+                    companyEmail: document.getElementById('companyEmail').value,
+                    companyAddress: document.getElementById('companyAddress').value,
+                    companyPhone: document.getElementById('companyPhone').value,
+                    companyWebsite: document.getElementById('companyWebsite').value,
+                    companyTaxId: document.getElementById('companyTaxId').value,
+                    companyLogo: document.getElementById('previewCompanyLogo').innerHTML
+                },
+                clientInfo: {
+                    clientName: document.getElementById('clientName').value,
+                    clientEmail: document.getElementById('clientEmail').value,
+                    clientAddress: document.getElementById('clientAddress').value,
+                    clientPhone: document.getElementById('clientPhone').value,
+                    clientTaxId: document.getElementById('clientTaxId').value
+                },
+                items: Array.from(document.querySelectorAll('#itemsContainer .item-row')).map(row => ({
+                    description: row.querySelector('.item-desc').value,
+                    quantity: row.querySelector('.item-qty').value,
+                    price: row.querySelector('.item-price').value,
+                    tax: row.querySelector('.item-tax').value
+                })),
+                totals: {
+                    taxRate: document.getElementById('taxRate').value,
+                    discount: document.getElementById('discount').value,
+                    shipping: document.getElementById('shipping').value,
+                    currency: document.getElementById('currency').value,
+                    customCurrency: document.getElementById('customCurrency').value
+                },
+                notes: {
+                    notes: document.getElementById('notes').value,
+                    footerText: document.getElementById('footerText').value,
+                    signatureName: document.getElementById('signatureName').value,
+                    signatureTitle: document.getElementById('signatureTitle').value,
+                    signatureImage: document.getElementById('previewSignatureImage').innerHTML
+                }
+            };
+            
+            const templateName = prompt('Enter a name for this template:');
+            if (templateName) {
+                const templates = JSON.parse(localStorage.getItem('invoiceTemplates')) || {};
+                templates[templateName] = formData;
+                localStorage.setItem('invoiceTemplates', JSON.stringify(templates));
+                alert('Template saved successfully!');
+            }
+        }
+
+        function loadTemplate() {
+            const templates = JSON.parse(localStorage.getItem('invoiceTemplates')) || {};
+            const templateNames = Object.keys(templates);
+            
+            if (templateNames.length === 0) {
+                alert('No saved templates found.');
+                return;
+            }
+            
+            const selectedTemplate = prompt(`Available templates:\n${templateNames.join('\n')}\n\nEnter template name to load:`);
+            
+            if (selectedTemplate && templates[selectedTemplate]) {
+                const template = templates[selectedTemplate];
+                
+                // Invoice Details
+                document.getElementById('invoiceNumber').value = template.invoiceDetails.invoiceNumber || '';
+                document.getElementById('invoiceDate').value = template.invoiceDetails.invoiceDate || '';
+                document.getElementById('dueDate').value = template.invoiceDetails.dueDate || '';
+                document.getElementById('invoiceTitle').value = template.invoiceDetails.invoiceTitle || '';
+                document.getElementById('paymentTerms').value = template.invoiceDetails.paymentTerms || '';
+                
+                // Company Info
+                document.getElementById('companyName').value = template.companyInfo.companyName || '';
+                document.getElementById('companyEmail').value = template.companyInfo.companyEmail || '';
+                document.getElementById('companyAddress').value = template.companyInfo.companyAddress || '';
+                document.getElementById('companyPhone').value = template.companyInfo.companyPhone || '';
+                document.getElementById('companyWebsite').value = template.companyInfo.companyWebsite || '';
+                document.getElementById('companyTaxId').value = template.companyInfo.companyTaxId || '';
+                document.getElementById('previewCompanyLogo').innerHTML = template.companyInfo.companyLogo || '';
+                
+                // Client Info
+                document.getElementById('clientName').value = template.clientInfo.clientName || '';
+                document.getElementById('clientEmail').value = template.clientInfo.clientEmail || '';
+                document.getElementById('clientAddress').value = template.clientInfo.clientAddress || '';
+                document.getElementById('clientPhone').value = template.clientInfo.clientPhone || '';
+                document.getElementById('clientTaxId').value = template.clientInfo.clientTaxId || '';
+                
+                // Items
+                document.getElementById('itemsContainer').innerHTML = '';
+                if (template.items && template.items.length > 0) {
+                    template.items.forEach(item => {
+                        addItemRow();
+                        const rows = document.querySelectorAll('#itemsContainer .item-row');
+                        const lastRow = rows[rows.length - 1];
+                        lastRow.querySelector('.item-desc').value = item.description || '';
+                        lastRow.querySelector('.item-qty').value = item.quantity || 1;
+                        lastRow.querySelector('.item-price').value = item.price || 0;
+                        lastRow.querySelector('.item-tax').value = item.tax || '10';
+                        calculateItemTotal(lastRow);
+                    });
+                } else {
+                    addItemRow();
+                }
+                
+                // Totals
+                document.getElementById('taxRate').value = template.totals.taxRate || '10';
+                document.getElementById('discount').value = template.totals.discount || '0';
+                document.getElementById('shipping').value = template.totals.shipping || '0';
+                document.getElementById('currency').value = template.totals.currency || '$';
+                document.getElementById('customCurrency').value = template.totals.customCurrency || '';
+                if (template.totals.currency === 'custom') {
+                    document.getElementById('customCurrencyContainer').style.display = 'block';
+                } else {
+                    document.getElementById('customCurrencyContainer').style.display = 'none';
+                }
+                
+                // Notes & Signature
+                document.getElementById('notes').value = template.notes.notes || '';
+                document.getElementById('footerText').value = template.notes.footerText || '';
+                document.getElementById('signatureName').value = template.notes.signatureName || '';
+                document.getElementById('signatureTitle').value = template.notes.signatureTitle || '';
+                document.getElementById('previewSignatureImage').innerHTML = template.notes.signatureImage || '';
+                
+                calculateTotals();
+                updateInvoicePreview();
+                
+                alert('Template loaded successfully!');
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all invoice data?')) {
+                // Reset form inputs
+                document.querySelectorAll('input, textarea').forEach(input => {
+                    if (input.id !== 'themeToggle') {
+                        input.value = '';
+                    }
+                });
+                
+                // Reset tax, discount, shipping
+                document.getElementById('taxRate').value = '10';
+                document.getElementById('discount').value = '0';
+                document.getElementById('shipping').value = '0';
+                document.getElementById('currency').value = '$';
+                document.getElementById('customCurrency').value = '';
+                document.getElementById('customCurrencyContainer').style.display = 'none';
+                
+                // Clear items
+                document.getElementById('itemsContainer').innerHTML = '';
+                
+                // Clear logo and signature
+                document.getElementById('previewCompanyLogo').innerHTML = '';
+                document.getElementById('previewSignatureImage').innerHTML = '';
+                
+                // Set current date as default
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('invoiceDate').value = today;
+                
+                // Set due date to 15 days from now
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 15);
+                document.getElementById('dueDate').value = dueDate.toISOString().split('T')[0];
+                
+                // Generate a new random invoice number
+                document.getElementById('invoiceNumber').value = 'INV-' + Math.floor(1000 + Math.random() * 9000);
+                
+                // Set default footer text
+                document.getElementById('footerText').value = 'Thank you for your business!';
+                
+                // Reset totals
+                document.getElementById('subtotal').textContent = formatCurrency(0);
+                document.getElementById('taxAmount').textContent = formatCurrency(0);
+                document.getElementById('discountAmount').textContent = formatCurrency(0);
+                document.getElementById('shippingAmount').textContent = formatCurrency(0);
+                document.getElementById('totalAmount').textContent = formatCurrency(0);
+                
+                // Add first item row
+                addItemRow();
+                
+                // Update preview
+                updateInvoicePreview();
+            }
+        }
+
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoContainer = document.getElementById('previewCompanyLogo');
+                logoContainer.innerHTML = `<img src="${e.target.result}" style="max-width: 150px; max-height: 80px;" alt="Company Logo">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleSignatureUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const signatureContainer = document.getElementById('previewSignatureImage');
+                signatureContainer.innerHTML = `<img src="${e.target.result}" style="max-width: 150px; max-height: 60px; border-bottom: 1px solid #ccc;" alt="Signature">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
