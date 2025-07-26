@@ -175,6 +175,7 @@
             cursor: pointer;
         }
 
+        /* Print and PDF specific styles */
         @media print {
             body * {
                 visibility: hidden;
@@ -189,13 +190,45 @@
                 width: 100%;
                 box-shadow: none;
                 border: none;
-                padding: 0;
+                padding: 20px !important;
+                margin: 0 !important;
+                background-color: white !important;
+                color: black !important;
             }
             .no-print {
                 display: none !important;
             }
             .invoice-footer {
                 page-break-after: always;
+            }
+            /* Ensure text is visible in print/PDF */
+            .invoice-paper,
+            .invoice-paper h1,
+            .invoice-paper h2,
+            .invoice-paper h3,
+            .invoice-paper p,
+            .invoice-paper span,
+            .invoice-paper td,
+            .invoice-paper th {
+                color: #000 !important;
+            }
+            /* Add borders for print/PDF */
+            .invoice-paper {
+                border: 1px solid #ddd !important;
+            }
+            .client-info {
+                border: 1px solid #ddd !important;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            table, th, td {
+                border: 1px solid #ddd;
+            }
+            th, td {
+                padding: 8px;
+                text-align: left;
             }
         }
 
@@ -244,6 +277,28 @@
         input:checked + .slider:before {
             transform: translateX(25px);
         }
+
+        /* PDF specific styles */
+        .pdf-mode {
+            padding: 20px;
+            background-color: white;
+            color: black;
+        }
+        .pdf-mode .client-info {
+            border: 1px solid #ddd;
+            padding: 15px;
+        }
+        .pdf-mode table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        .pdf-mode table, .pdf-mode th, .pdf-mode td {
+            border: 1px solid #ddd;
+        }
+        .pdf-mode th, .pdf-mode td {
+            padding: 8px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -290,7 +345,7 @@
         </div>
 
         <div class="row">
-            <div class="col-lg-7 mb-4">
+             <div class="col-lg-7 mb-4">
                 <div class="card mb-4">
                     <div class="card-header">
                         <i class="fas fa-info-circle me-2"></i> Invoice Details
@@ -520,7 +575,8 @@
                     </div>
                 </div>
             </div>
-
+          
+          
             <div class="col-lg-5">
                 <div class="sticky-top" style="top: 20px;">
                     <div class="card">
@@ -528,7 +584,7 @@
                             <i class="fas fa-eye me-2"></i> Invoice Preview
                         </div>
                         <div class="card-body p-0">
-                            <div class="invoice-paper p-4" id="invoicePreview">
+                               <div class="invoice-paper p-4" id="invoicePreview">
                                 <div class="d-flex justify-content-between mb-4 flex-wrap">
                                     <div class="company-info">
                                         <div id="previewCompanyLogo" class="mb-3"></div>
@@ -648,7 +704,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="text" class="form-control" id="pdfFilename" value="yugal_invoice_generator.pdf" placeholder="Enter filename">
+                    <input type="text" class="form-control" id="pdfFilename" value="invoice.pdf" placeholder="Enter filename">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -748,8 +804,9 @@
             // Initialize Bootstrap modal
             const filenameModal = new bootstrap.Modal(document.getElementById('filenameModal'));
             const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
-            
-            // Initial preview update
+              
+          
+          // Initial preview update
             updateInvoicePreview();
         }
 
@@ -1027,6 +1084,8 @@
             modal.show();
         }
 
+      
+      
         async function generatePdf() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('filenameModal'));
             modal.hide();
@@ -1046,42 +1105,68 @@
                     format: 'a4'
                 });
                 
-                // Capture the invoice preview as an image
+                // Create a clone of the invoice preview for PDF generation
                 const invoicePreview = document.getElementById('invoicePreview');
+                const pdfClone = invoicePreview.cloneNode(true);
+                
+                // Add PDF-specific styling
+                pdfClone.classList.add('pdf-mode');
+                
+                // Temporarily add to body (hidden) for rendering
+                pdfClone.style.position = 'absolute';
+                pdfClone.style.left = '-9999px';
+                pdfClone.style.width = '210mm';
+                document.body.appendChild(pdfClone);
+                
+                // Calculate content height
+                const contentHeight = pdfClone.offsetHeight;
+                const pageHeight = 297; // A4 height in mm (297mm)
+                const scale = 210 / pdfClone.offsetWidth; // Scale to fit width
                 
                 // Use html2canvas to capture the preview
-                const canvas = await html2canvas(invoicePreview, {
-                    scale: 2,
+                const canvas = await html2canvas(pdfClone, {
+                    scale: scale * 2, // Higher scale for better quality
                     logging: false,
                     useCORS: true,
                     allowTaint: true,
                     backgroundColor: '#ffffff'
                 });
                 
+                // Remove the clone
+                document.body.removeChild(pdfClone);
+                
                 // Convert canvas to image data
                 const imgData = canvas.toDataURL('image/png');
                 
                 // Calculate dimensions to fit the PDF
                 const imgWidth = 210; // A4 width in mm
-                const pageHeight = 297; // A4 height in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 
-                // Add the image to the PDF
-                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-                
-                // Add a new page if the content is too long
-                let heightLeft = imgHeight;
-                let position = 0;
-                
-                while (heightLeft >= pageHeight) {
-                    position = heightLeft - pageHeight;
-                    doc.addPage();
-                    doc.addImage(imgData, 'PNG', 0, -position, imgWidth, imgHeight);
+                // Check if content fits on one page
+                if (imgHeight <= pageHeight) {
+                    // Single page
+                    doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                } else {
+                    // Multiple pages
+                    let heightLeft = imgHeight;
+                    let position = 0;
+                    const pageWidth = imgWidth;
+                    
+                    // First page
+                    doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
                     heightLeft -= pageHeight;
+                    
+                    // Additional pages if needed
+                    while (heightLeft > 0) {
+                        position = heightLeft - imgHeight;
+                        doc.addPage();
+                        doc.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
                 }
                 
                 // Save the PDF
-                let filename = document.getElementById('pdfFilename').value || 'yugal_invoice_generator.pdf';
+                let filename = document.getElementById('pdfFilename').value || 'invoice.pdf';
                 if (!filename.toLowerCase().endsWith('.pdf')) {
                     filename += '.pdf';
                 }
@@ -1095,6 +1180,75 @@
                 const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
                 loadingModal.hide();
             }
+        }
+
+        function printInvoice() {
+            // Create a clone of the invoice for printing
+            const invoicePreview = document.getElementById('invoicePreview');
+            const printClone = invoicePreview.cloneNode(true);
+            
+            // Add print-specific styling
+            printClone.style.width = '100%';
+            printClone.style.padding = '20px';
+            printClone.style.margin = '0';
+            printClone.style.backgroundColor = 'white';
+            
+            // Open print window
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Invoice Print</title>
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background-color: white;
+                            color: black;
+                        }
+                        .invoice-paper {
+                            width: 100%;
+                            padding: 20px;
+                            margin: 0;
+                            background-color: white !important;
+                            color: black !important;
+                        }
+                        .client-info {
+                            border: 1px solid #ddd !important;
+                            padding: 15px;
+                        }
+                        table {
+                            border-collapse: collapse;
+                            width: 100%;
+                        }
+                        table, th, td {
+                            border: 1px solid #ddd;
+                        }
+                        th, td {
+                            padding: 8px;
+                            text-align: left;
+                        }
+                        @page {
+                            size: A4;
+                            margin: 10mm;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printClone.outerHTML}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            setTimeout(function() {
+                                window.close();
+                            }, 100);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
         }
 
         function printInvoice() {
@@ -1314,6 +1468,7 @@
             };
             reader.readAsDataURL(file);
         }
+        // ... (rest of the JavaScript functions remain the same) ...
     </script>
 </body>
 </html>
